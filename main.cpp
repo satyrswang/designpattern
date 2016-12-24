@@ -1,68 +1,92 @@
 //
 //  main.cpp
-//  re
+//  designpattern
 //
-//  Created by wyq on 25/12/2016.
+//  Created by wyq on 24/12/2016.
 //  Copyright © 2016 wyq. All rights reserved.
 //
 
-#include "Command.hpp"
+//对象类
 
-//模拟输入字符串,然后对输入的字符串进行undo redo操作
-//你可以打开有undo redo功能的文本编辑程序测试是否是这样
-//这里记录的是完整记录,即:即便在undo 或 redo 过程中又发生数据改变
-//也会记录,如果不想这样在undo 或者 redo 输入新字符串时 将redo清空即可
-//即认为在历史记录中修改值被认为是最新的值，不需要再redo
-int main()
-{
-    //默认没有输入字符串可以是空，这里为了演示赋值一个特殊的字符串
-    Commander *p = new Commander( new InputCommand( "[empty]" ) );
+#include <iostream>
+#include <map>
+
+
+
+class Object{
+public:
+    Object():_member(0){}
+    Object(int m):_member(m){}
+private:
+    int _member;
+};
+
+typedef std::map<int,Object> MAP;
+
+int main(int argc, const char * argv[]) {
     
-    //输入1234
-    p->ExecuteCommand( new InputCommand( "1234" ) );
-    //输入567
-    p->ExecuteCommand( new InputCommand( "567" ) );
-    //输入xxx
-    p->ExecuteCommand( new InputCommand( "xxx" ) );
+    MAP m;
+    //用这个容器来表示对象的状态，根据标识符得到对象
+    {
+        //创建操作的un/re
+        int id1=1,id2=2;
+        Object obj(10);//对象创建参数
+        m.insert(std::make_pair(id1,obj));
+        m.insert(std::make_pair(id2,obj));
     
-    //执行一次undo 撤销到 567
-    p->Undo();
-    //执行一次undo 撤销到 1234
-    p->Undo();
-    
-    //undo后中间输入新字符串 insert 覆盖 1234
-    p->ExecuteCommand( new InputCommand( "insert" ) );
-    
-    //执行一次undo 撤销到 1234
-    p->Undo();
-    
-    //执行一次undo 撤销到最初情况 [empty]
-    p->Undo();
-    
-    //执行失败已经undo 到最原始情况
-    p->Undo();
-    
-    //执行一次redo 重做到 1234
-    p->Redo();
-    //执行一次redo 重做到 insert
-    p->Redo();
-    //执行一次redo 重做到 567
-    p->Redo();
-    
-    //redo后中间输入新字符串 insert again 覆盖 567
-    p->ExecuteCommand( new InputCommand( "insert again" ) );
-    
-    //执行一次undo 撤销到567
-    p->Undo();
-    
-    //执行一次redo 重做到 insert again
-    p->Redo();
-    
-    //执行一次redo 重做到 xxx
-    p->Redo();
-    
-    //执行失败已经redo 到最新情况
-    p->Redo();
-    delete p;
+        m.erase(id1);//创建标识号为id1的对象的撤销操作
+        m.erase(id2);
+       
+        m.insert(std::make_pair(id1,obj));//重做创建标识号为id1的对象
+        m.insert(std::make_pair(id2,obj));
+    }
+    {
+        //修改操作的un/re
+        int id1=1,id2=2;
+        Object obj(10);
+        m.insert(std::make_pair(id1,obj));
+        m.insert(std::make_pair(id2,obj));
+
+        //保存的信息
+        Object OBK1 = m[id1];//备份标识号为id1的对象的原始信息
+        Object OBK2 = m[id2];
+        
+        Object OM1(20);//备份标识号为id1的对象的修改参数信息
+        Object OM2(50);
+        
+        m[id1] = OM1;//修改标识号为id1的对象
+        m[id2] = OM2;
+     
+        m[id1] = OBK1;//撤销修改标识号为id1的对象
+        m[id2] = OBK2;
+        
+        m[id1] = OM1;//重做修改标识号为id1的对象
+        m[id2] = OM2;
+    }
+    {
+        //删除操作的un/re
+        int id1=1,id2=2;
+        Object obj(10);
+        m.insert(std::make_pair(id1,obj));
+        m.insert(std::make_pair(id2,obj));
+        
+        Object OBK1 = m[id1];
+        Object OBK2 = m[id2];
+       
+        m.erase(id1);//delete
+        m.erase(id2);
+      
+        m.insert(std::make_pair(id1,OBK1));//un
+        m.insert(std::make_pair(id2,OBK2));
+   
+        m.erase(id1);//re
+        m.erase(id2);
+    } 
+    {//复合操作
+
+
+        
+    }
     return 0;
 }
+
