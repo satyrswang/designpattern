@@ -10,7 +10,7 @@ remove()
 
 reference()
 
-命令基类 非模板为借口：command: execute()
+命令基类 非模板为接口：command: execute()
 
 create: identifier_type  object_type container_type
 
